@@ -1,0 +1,9 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+      "baseUrl": "./",
+      "outDir": "./dist",
+      "module": "CommonJS",
+      "sourceMap": true
+    }
+  }

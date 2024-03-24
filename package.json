@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "build:proto": "proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --includeDirs=./kritor/protos ./ --outDir=generated/ kritor/protos/*.proto kritor/protos/*/*.proto"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.10.3",
+    "@grpc/proto-loader": "^0.7.10"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  }
+}
