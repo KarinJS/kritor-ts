@@ -1,42 +1,68 @@
+import { EventStructure__Output } from '../generated/kritor/event/EventStructure';
 import { EventType } from '../generated/kritor/event/EventType';
-import { init } from './api';
 
-const host = ""
-const account = ""
+import { init, authentication, sendMessage, RegisterActiveListener, addTicket, deleteTicket } from './api';
 
-const clients = init(host)
+const host = "192.168.1.235:5700"
+const account = "account"
+const superTicket = "super_ticket"
 
-const deadline = new Date();
-deadline.setSeconds(deadline.getSeconds() + 5);
-clients.authClient.waitForReady(deadline, (error?: Error) => {
-    if (error) {
-        console.log(`Client connect error: ${error.message}`);
-    } else {
-        console.log('Client connected');
-        clients.authClient.auth({
-            ticket: 'ticket',
-            account: account,
-        }, (error?, rsp?) => {
-            if (error) {
-                console.error(error.message);
-            } else if (rsp) {
-                console.log(rsp);
-            }
-        })
-        const eventStream = clients.eventClient.RegisterActiveListener(
-            { type: EventType.EVENT_TYPE_MESSAGE }
-        )
-        eventStream.on('data', function (feature) {
-            console.log(JSON.stringify(feature));
-        });
-        eventStream.on('end', function () {
-            // The server has finished sending
-        });
-        eventStream.on('error', function (e) {
-            // An error has occurred and the stream has been closed.
-        });
-        eventStream.on('status', function (status) {
-            // process status
-        });
+try {
+    const clients = init(host)
+
+    // const ticket = Math.random().toString(36)
+    // addTicket(clients, account, superTicket, ticket, (code, msg) => { })
+
+    // authentication(clients, account, ticket, (code, msg) => {
+    //     if (code === "OK") {
+    //         console.log("Authentication success")
+    //     } else {
+    //         console.log(`Authentication failed: ${msg}`)
+    //     }
+    // })
+
+    // deleteTicket(clients, account, superTicket, ticket, (code, msg) => { })
+
+    const onCore = function (message: EventStructure__Output) {
+        console.log(`onCore received: ${JSON.stringify(message)}`)
     }
-});
+
+    const onMessage = function (message: EventStructure__Output) {
+        console.log(`onMessage received: ${JSON.stringify(message)}`)
+    }
+
+    const onNotice = function (message: EventStructure__Output) {
+        console.log(`onNotice received: ${JSON.stringify(message)}`)
+    }
+
+    const onRequest = function (message: EventStructure__Output) {
+        console.log(`onRequest received: ${JSON.stringify(message)}`)
+    }
+
+    const onEnd = function () {
+        console.info("Stream End")
+    }
+
+    const onError = function (e: Error) {
+        console.error(e)
+    }
+
+    RegisterActiveListener(clients, EventType.EVENT_TYPE_CORE_EVENT, onCore, onEnd, onError)
+    RegisterActiveListener(clients, EventType.EVENT_TYPE_MESSAGE, onMessage, onEnd, onError)
+    RegisterActiveListener(clients, EventType.EVENT_TYPE_NOTICE, onNotice, onEnd, onError)
+    RegisterActiveListener(clients, EventType.EVENT_TYPE_REQUEST, onRequest, onEnd, onError)
+
+    sendMessage(clients, { scene: "GROUP", peer: "635275515" },
+        [{
+            at: {
+                uid: "u_w2DGIV0O00hf3fZXQOrA0w"
+            }
+        }], 3,
+        (messageId, messageTime) => {
+            console.log(`Message sent, id: ${messageId}, time: ${messageTime}`)
+        }
+    )
+
+} catch (error) {
+    console.error(error)
+}
