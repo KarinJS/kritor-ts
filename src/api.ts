@@ -45,7 +45,7 @@ function getClient<Subtype>(constructor: SubtypeConstructor<typeof grpc.Client, 
 export function init(host: string, timeout: number = 5000) {
     const authenticationProtoGrpcType = getProtoGrpcType('auth/authentication.proto', ['kritor/protos']) as AuthenticationProtoGrpcType;
     const coreProtoGrpcType = getProtoGrpcType('core/core.proto', ['kritor/protos']) as CoreProtoGrpcType;
-    const customizationProtoGrpcType = getProtoGrpcType('customization/customization.proto', ['kritor/protos']) as CustomizationProtoGrpcType;
+    const customizationProtoGrpcType = getProtoGrpcType('developer/customization.proto', ['kritor/protos']) as CustomizationProtoGrpcType;
     const developerProtoGrpcType = getProtoGrpcType('developer/developer.proto', ['kritor/protos']) as DeveloperProtoGrpcType;
     const eventProtoGrpcType = getProtoGrpcType('event/event.proto', ['kritor/protos']) as EventProtoGrpcType;
     const friendProtoGrpcType = getProtoGrpcType('friend/friend.proto', ['kritor/protos']) as FriendProtoGrpcType;
@@ -175,13 +175,13 @@ export function downloadFile(client: ReturnType<typeof init>, url: string, base6
     });
 }
 
-export function getCurrentAccount(client: ReturnType<typeof init>, callback: (accountUid: string, accountUin: number, accountName: string) => void) {
+export function getCurrentAccount(client: ReturnType<typeof init>, callback: (accountUid: string, accountUin: protoLoader.Long, accountName: string) => void) {
     const { coreClient } = client;
     coreClient.getCurrentAccount({}, (err, response) => {
         if (err) {
             throw err;
         } else {
-            callback(response.accountUid, parseInt(response.accountUin), response.accountName);
+            callback(response.accountUid, response.accountUin, response.accountName);
         }
     });
 }
@@ -208,7 +208,7 @@ export function CallFunction(client: ReturnType<typeof init>, cmd: string, seq: 
     });
 }
 
-export function shell(client: ReturnType<typeof init>, command: string, directory: string, callback: (isSuccess: boolean, data: string) => void) {
+export function shell(client: ReturnType<typeof init>, command: string[], directory: string, callback: (isSuccess: boolean, data: string) => void) {
     const { developerClient } = client;
     developerClient.shell({ command, directory }, (err, response) => {
         if (err) {
@@ -307,21 +307,22 @@ export function getCmdWhitelist(client: ReturnType<typeof init>, callback: (comm
     });
 }
 
-export function RegisterActiveListener(client: ReturnType<typeof init>, type: EventType, dataCallback: (event: EventStructure__Output) => void, endCallback: () => void, errorCallback: (e: Error) => void) {
+export function RegisterActiveListener(client: ReturnType<typeof init>, type: EventType, dataCallback: (event: EventStructure__Output) => void, endCallback: () => void, errorCallback: (e: Error) => void, statusCallback?: (status: grpc.StatusObject) => void) {
     const { eventClient } = client;
     const eventStream = eventClient.RegisterActiveListener({ type });
     eventStream.on('data', dataCallback);
     eventStream.on('end', endCallback);
     eventStream.on('error', errorCallback);
+    eventStream.on('status', statusCallback);
 }
 
-export function createFolder(client: ReturnType<typeof init>, groupId: number, name: string, callback: (id: string, usedSpace: number) => void) {
+export function createFolder(client: ReturnType<typeof init>, groupId: number, name: string, callback: (id: string, usedSpace: protoLoader.Long) => void) {
     const { groupFileClient } = client;
     groupFileClient.createFolder({ groupId, name }, (err, response) => {
         if (err) {
             throw err;
         } else {
-            callback(response.id, parseInt(response.usedSpace));
+            callback(response.id, response.usedSpace);
         }
     });
 }
@@ -462,13 +463,13 @@ export function getUidByUin(client: ReturnType<typeof init>, targetUins: number[
     });
 }
 
-export function getUinByUid(client: ReturnType<typeof init>, targetUids: string[], callback: (uinMap: Record<string, number>) => void) {
+export function getUinByUid(client: ReturnType<typeof init>, targetUids: string[], callback: (uinMap: Record<string, protoLoader.Long>) => void) {
     const { friendClient } = client;
     friendClient.getUinByUid({ targetUids }, (err, response) => {
         if (err) {
             throw err;
         } else {
-            callback(Object.fromEntries(Object.entries(response.uinMap).map(([key, value]) => [key, parseInt(value)])));
+            callback(response.uinMap);
         }
     });
 }
